@@ -13,13 +13,20 @@
 # bxs ls
 # bxs ls-remote
 
+BASE_BOX=http://de.archive.ubuntu.com/ubuntu
+BASE_BOX_NAME=vivid
+BASE_BOX_ARCH=i386
+BASE_BOX_VARIANT=buildd
+ALLOWED_GROUPS=www-data
+
 WORKING_DIR=$HOME/.bxs
-IMAGES_DIR=$WORKING_DIR/images
-REMOTE_IMAGES=https://raw.githubusercontent.com/akoenig/bxs/master/images
-INDEX=$REMOTE_BOXES/index
+IMAGES_DIR=$WORKING_DIR/boxes
+REMOTE_IMAGES=https://raw.githubusercontent.com/akoenig/bxs/master/boxes
+INDEX=$REMOTE_IMAGES/index
+BOXES_DIR=/var/chroots
 
 function prepare() {
-    mkdir -p $BOXES_DIR
+    mkdir -p $IMAGES_DIR
 
 	type wget > /dev/null 2>&1 || { echo >&2 "Bummer! 'wget' is not installed. Aborting."; exit 1; }
 	type debootstrap > /dev/null 2>&1 || { echo >&2 "Bummer! 'debootstrap' is not installed. Aborting."; exit 1;}
@@ -37,13 +44,29 @@ function lsRemote() {
 function install() {
 	name=$1
 
+	wget -qO- $REMOTE_IMAGES/$name > $IMAGES_DIR/$name
+
+	BOX_DESTINATION=$BOXES_DIR/$name
+	mkdir -p $BOX_DESTINATION
+	debootstrap --variant="$BASE_BOX_VARIANT" --arch="$BASE_BOX_ARCH" "$BASE_BOX_NAME" "$BOX_DESTINATION" "$BASE_BOX"
+
+	cat <<-EOF > /etc/schroot/chroot.d/$name
+	[bxs-$name]
+	description=bxs $(echo "$name")
+	type=directory
+	directory=$(echo "$BOX_DESTINATION")
+	groups=$ALLOWED_GROUPS
+	EOF
+
+	cat $IMAGES_DIR/$name | schroot -c bldr-$name -- 
+}
+
+function exists() {
+	name=$1
+
 	local availability=$(lsRemote | grep "^${name}$" | wc -l)
 
 	[[ $availability -ne "1" ]] && echo 404;
-
-	wget -qO- $REMOTE_IMAGES/$name > $IMAGES_DIR/$name
-
-
 }
 
 prepare
@@ -51,8 +74,13 @@ prepare
 case $1 in
 	"install")
 		box=$2
-		status=$(install $box)
 
-		[[ $status -eq 0 ]] && echo "Box installed" || echo "Image not found".
+		status=$(exists $box)
+		[[ $status -eq 404 ]] && echo "Image not found. Aborting." && exit 1
+
+		install $box
+	;;
+	"run")
+		box=$2
 	;;
 esac
