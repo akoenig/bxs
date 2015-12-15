@@ -10,20 +10,49 @@
 
 # bxs install <image-name>
 # bxs run <box-name>
+# bxs ls
 # bxs ls-remote
 
 WORKING_DIR=$HOME/.bxs
-BOXES_DIR=$WORKING_DIR/boxes
-INDEX=https://raw.githubusercontent.com/akoenig/bxs/master/boxes/
+IMAGES_DIR=$WORKING_DIR/images
+REMOTE_IMAGES=https://raw.githubusercontent.com/akoenig/bxs/master/images
+INDEX=$REMOTE_BOXES/index
 
 function prepare() {
     mkdir -p $BOXES_DIR
+
+	type wget > /dev/null 2>&1 || { echo >&2 "Bummer! 'wget' is not installed. Aborting."; exit 1; }
+	type debootstrap > /dev/null 2>&1 || { echo >&2 "Bummer! 'debootstrap' is not installed. Aborting."; exit 1;}
+	type schroot > /dev/null 2>&1 || { echo >&2 "Bummer! 'schroot' is not installed. Aborting."; exit 1;}
+}
+
+function ls() {
+	ls $BOXES_DIR
 }
 
 function lsRemote() {
-    ls $BOXES_DIR
+	wget -qO- $INDEX
 }
 
-function install($name) {
+function install() {
+	name=$1
+
+	local availability=$(lsRemote | grep "^${name}$" | wc -l)
+
+	[[ $availability -ne "1" ]] && echo 404;
+
+	wget -qO- $REMOTE_IMAGES/$name > $IMAGES_DIR/$name
+
 
 }
+
+prepare
+
+case $1 in
+	"install")
+		box=$2
+		status=$(install $box)
+
+		[[ $status -eq 0 ]] && echo "Box installed" || echo "Image not found".
+	;;
+esac
