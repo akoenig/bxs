@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+#
+# bxs
+#
+# Manager for lightweight provisioned environments
+#
+# Author: André König <andre.koenig@posteo.de>
+#
+
+# bxs install <image-name>
+# bxs run <box-name>
+# bxs ls-remote
+
+WORKING_DIR=$HOME/.bxs
+BOXES_DIR=$WORKING_DIR/boxes
+INDEX=https://raw.githubusercontent.com/akoenig/bxs/master/boxes/
+
+function prepare() {
+    mkdir -p $BOXES_DIR
+}
+
+function lsRemote() {
+    ls $BOXES_DIR
+}
+
+function install($name) {
+
+}
