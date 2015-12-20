@@ -12,6 +12,6 @@ apt-get install -y wget libssl-dev python
 
 cd /tmp
 wget --no-check-certificate https://nodejs.org/dist/v4.2.3/node-v4.2.3-linux-x86.tar.gz
-tar xfz node-v4.2.3-linux-x86.tar.gz && cd node-v4.2.3
+tar xfz node-v4.2.3-linux-x86.tar.gz && cd node-v4.2.3-linux-x86
 ./configure
 make && make install
