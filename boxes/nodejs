@@ -11,7 +11,7 @@ echo "Installing Node.js 4.2.3 (LTS)"
 apt-get install -y wget libssl-dev python
 
 cd /tmp
-wget https://nodejs.org/dist/v4.2.3/node-v4.2.3-linux-x86.tar.gz
+wget --no-check-certificate https://nodejs.org/dist/v4.2.3/node-v4.2.3-linux-x86.tar.gz
 tar xfz node-v4.2.3-linux-x86.tar.gz && cd node-v4.2.3
 ./configure
 make && make install
