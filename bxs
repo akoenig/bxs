@@ -33,11 +33,15 @@ function prepare() {
 	type schroot > /dev/null 2>&1 || { echo >&2 "Bummer! 'schroot' is not installed. Aborting."; exit 1;}
 }
 
-function ls() {
-	ls $BOXES_DIR
+function list() {
+    local count=$(ls -1 $BOXES_DIR | wc -l)
+
+    [[ $count -eq "0" ]] && echo 404
+
+    ls -1 $BOXES_DIR
 }
 
-function lsRemote() {
+function listRemote() {
 	wget -qO- $INDEX
 }
 
@@ -58,13 +62,13 @@ function install() {
 	groups=$ALLOWED_GROUPS
 	EOF
 
-	cat $IMAGES_DIR/$name | schroot -c bldr-$name -- 
+	cat $IMAGES_DIR/$name | schroot -c bxs-$name --
 }
 
-function exists() {
+function installable() {
 	name=$1
 
-	local availability=$(lsRemote | grep "^${name}$" | wc -l)
+	local availability=$(listRemote | grep "^${name}$" | wc -l)
 
 	[[ $availability -ne "1" ]] && echo 404;
 }
@@ -75,10 +79,17 @@ case $1 in
 	"install")
 		box=$2
 
-		status=$(exists $box)
+		status=$(installable $box)
 		[[ $status -eq 404 ]] && echo "Image not found. Aborting." && exit 1
 
 		install $box
+	;;
+	"ls")
+		status=$(list)
+
+        [[ $status -eq 404 ]] && echo "Nothing installed so far." && exit 0
+
+        echo $status
 	;;
 	"run")
 		box=$2
